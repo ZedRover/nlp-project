@@ -1,4 +1,7 @@
 data
 **/__pycache__
 **/_DS_Store
-
+.vscode
+notebook/pl/logs
+notebook/pl/wnb_logs
+notebook/pl/pre_train
