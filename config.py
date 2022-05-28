@@ -6,4 +6,4 @@ if tag=='lustre':
 elif tag=='dssg':
     DATA_DIR = '/dssg/home/acct-aemwx/aemwx-user1/wangyu/my/raw/data'
 else:
-    DATA_DIR='/Users/zed/workspace/VSCode/SJTU/nlp_proj/data'
+    DATA_DIR='/Users/zed/workspace/VSCode/SJTU/nlp-project/data'

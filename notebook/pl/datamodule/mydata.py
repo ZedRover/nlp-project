@@ -7,8 +7,8 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 import random
 from pl_bolts.datamodules import SklearnDataset
-
-GPU=False
+import numpy as np
+PIN_MEMORY=False
 
 
 class MyDataModule(pl.LightningDataModule):
@@ -48,13 +48,13 @@ class MyDataModule(pl.LightningDataModule):
         self.dataset_val = SklearnDataset(X=val_data[:,:-1],y = val_data[:,-1].astype(int))
         self.dataset_test = SklearnDataset(X=test_data[:,:-1],y = test_data[:,-1].astype(int))
     def train_dataloader(self):
-        return DataLoader(self.dataset_train, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=GPU)
+        return DataLoader(self.dataset_train, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=PIN_MEMORY)
 
     def val_dataloader(self):
-        return DataLoader(self.dataset_val, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=GPU)
+        return DataLoader(self.dataset_val, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=PIN_MEMORY)
 
     def test_dataloader(self):
-        return DataLoader(self.dataset_test, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=GPU)
+        return DataLoader(self.dataset_test, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=PIN_MEMORY)
     
     
 class CNNDataModule(pl.LightningDataModule):
@@ -86,14 +86,16 @@ class CNNDataModule(pl.LightningDataModule):
         train_val_split = int((1-self.val_fraction_rate)*len(insample))
         train_data = insample[:train_val_split,:]
         val_data  = insample[train_val_split:,:]
-        self.dataset_train = SklearnDataset(X=train_data[:,:-1],y = train_data[:,-1].astype(int))
-        self.dataset_val = SklearnDataset(X=val_data[:,:-1],y = val_data[:,-1].astype(int))
-        self.dataset_test = SklearnDataset(X=test_data[:,:-1],y = test_data[:,-1].astype(int))
+        y_train,y_val,y_test  = [[i[30*(j),-1] for j in range(int(len(i)//30)) ]for i in [train_data,val_data,test_data] ]
+        x_train,x_val,x_test = [[i[30*(j):30*(j+1),:-1] for j in range(int(len(i)//30)) ] for i in [train_data,val_data,test_data] ]
+        self.dataset_train,self.dataset_val,self.dataset_test = [
+            SklearnDataset(X=i,y = np.array(j).astype(int)) for i,j in zip([x_train,x_val,x_test],[y_train,y_val,y_test])
+        ]
     def train_dataloader(self):
-        return DataLoader(self.dataset_train, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=GPU)
+        return DataLoader(self.dataset_train, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=PIN_MEMORY)
 
     def val_dataloader(self):
-        return DataLoader(self.dataset_val, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=GPU)
+        return DataLoader(self.dataset_val, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=PIN_MEMORY)
 
     def test_dataloader(self):
-        return DataLoader(self.dataset_test, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=GPU)
+        return DataLoader(self.dataset_test, batch_size=self.batch_size, num_workers=self.num_workers,pin_memory=PIN_MEMORY)
