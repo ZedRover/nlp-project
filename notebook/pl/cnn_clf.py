@@ -39,7 +39,9 @@ class TextCNN(LightningModule):
         # self.input = nn.Linear(300,512)
         # 1表示channel_num，filter_num即输出数据通道数，卷积核大小为(kernel, embedding_dim)
         self.convs = nn.ModuleList([
-            nn.Sequential(nn.Conv2d(1, filter_num, (kernel, embedding_dim)),
+            nn.Sequential(
+                            # nn.Conv2d(1, filter_num, (kernel, embedding_dim)),
+                          nn.Conv1d(in_channels=embedding_dim, out_channels=3, kernel_size=3),
                           nn.LeakyReLU(),
                           nn.MaxPool2d((30 - kernel + 1, 1)))
             for kernel in kernel_list
@@ -99,11 +101,13 @@ class TextCNN(LightningModule):
         
 
 
-NUM_GPU=2
-MAX_EPOCH=500
-BATCH_SIZE=128
 
 if __name__=='__main__':
+    NUM_GPU=2
+    MAX_EPOCH=500
+    BATCH_SIZE=128
+    SEQ_LEN = 30
+    WEMD_LEN = 300
     wandb.login()
     wandb_logger = WandbLogger(project='cnn')
     checkpoint_callback = ModelCheckpoint(
@@ -131,7 +135,7 @@ if __name__=='__main__':
                         precision=16,
                         )
 
-    cnn = TextCNN(vocab_size=30, embedding_dim=300, output_size=2,lr=1e-5)
+    cnn = TextCNN(vocab_size=SEQ_LEN, embedding_dim=WEMD_LEN, output_size=2,lr=1e-5)
     data_module = CNNDataModule(batch_size=BATCH_SIZE,num_workers=10)
     trainer.fit(cnn,data_module)
     trainer.test(cnn, datamodule=data_module)
