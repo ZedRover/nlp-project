@@ -7,3 +7,5 @@ numpy
 wandb
 sklearn
 transformers
+xlrd
+openpyxl
