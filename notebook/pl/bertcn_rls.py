@@ -16,6 +16,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 from torch.nn import functional as F
 import torch
+from pytorch_lightning.plugins import DDPPlugin
 import config
 warnings.filterwarnings('ignore')
 RANDOM_SEED = 999
@@ -57,7 +58,7 @@ class MyDataSet(Dataset):
         }
 
 
-class MyDataModule(pl.LightningDataModule):
+class BertDataModule(pl.LightningDataModule):
 
     def __init__(self, train, val, test, batch_size: int = 64, num_workers: int = 20,):
         super().__init__()
@@ -213,7 +214,7 @@ def main():
     """ Main training routine specific for this project. """
     wandb.login()
     wandb_logger = WandbLogger(
-        project='bert-test-k80', save_dir='./wnb_logs/', offline=False)
+        project='bert-clf', save_dir='./wnb_logs/', offline=False,name='bert-release')
 
     df_pos = pd.read_excel(config.DATA_DIR+'/女权无标点.xlsx', index_col=0)
     df_neg = pd.read_excel(config.DATA_DIR+'/非女权无标点.xlsx', index_col=0)
@@ -252,10 +253,11 @@ def main():
         default_root_dir='./logs',
         logger=wandb_logger,
         callbacks=[early_stopping_callback,checkpoint_callback],
+        plugins=DDPPlugin(find_unused_parameters=False),
         max_epochs=500,
         gpus=2,
     )
-    datamodule = MyDataModule(
+    datamodule = BertDataModule(
         train_dataset, val_dataset, test_dataset, batch_size=32)
     model = BERTModel(learning_rate=1e-5, batch_size=32)
     trainer.fit(model, datamodule)

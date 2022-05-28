@@ -26,6 +26,11 @@ a = 1
 
 
 class TextCNN(LightningModule):
+    '''
+    Reference:
+        https://zhuanlan.zhihu.com/p/77634533 
+        http://www.showmeai.tech/article-detail/248
+    '''
     # num_labels为输出类别（2个类别，0和1）,三种kernel，size分别是3,4，5，每种kernel有100个
     def __init__(self, seq_length, embedding_dim, num_labels, filter_num=64, kernel_list=(3,4,5,30), dropout=0.5, lr=1e-3):
         super(TextCNN, self).__init__()
@@ -118,9 +123,10 @@ if __name__ == '__main__':
     BATCH_SIZE = 1024
     SEQ_LEN = 30
     WEMD_LEN = 300
+    LEARNING_RATE=0.01
     wandb.login()
     wandb_logger = WandbLogger(
-        project='cnn-clf', save_dir='./wnb_logs/', offline=False)
+        project='cnn-clf', save_dir='./wnb_logs/', offline=False, name='cnn-release')
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
         dirpath="./logs/checkpoints",
@@ -130,8 +136,8 @@ if __name__ == '__main__':
         save_last=True
     )
     early_stop_callback = EarlyStopping(monitor="val_loss",
-                                        min_delta=0.00,
-                                        patience=5,
+                                        min_delta=0.003,
+                                        patience=10,
                                         verbose=True,
                                         mode="min")
 
@@ -151,7 +157,7 @@ if __name__ == '__main__':
                          )
 
     cnn = TextCNN(seq_length=SEQ_LEN, embedding_dim=WEMD_LEN,
-                  num_labels=2, lr=1e-4,dropout=0.2)
+                  num_labels=2, lr=LEARNING_RATE,dropout=0.2)
     data_module = CNNDataModule(batch_size=BATCH_SIZE, num_workers=8)
     trainer.fit(cnn, data_module)
     trainer.test(cnn, data_module)
